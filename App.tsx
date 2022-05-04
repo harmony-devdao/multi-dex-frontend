@@ -39,6 +39,7 @@ const DEX_LIST = {
 
 const DEX_ERC_SWAP_ABI = [
   'function getAmountsOut(uint amountIn, address[] path) view returns (uint[] amounts)',
+  'function approve(address spender, uint value) external returns (bool)',
   'function swapExactTokensForTokensSupportingFeeOnTransferTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline ) external returns (uint[] memory amounts)',
 ];
 
@@ -62,6 +63,12 @@ export default function App() {
   const [isConnected, setIsConnected] = React.useState<boolean>(false);
 
   let [dexContract, setDexContract] = React.useState(null);
+
+  const onConnectClicked = () => {
+    provider?.send('eth_requestAccounts', []).then((accounts: string[]) => {
+      setWalletAddress(accounts[0]);
+    });
+  };
 
   const onDexSelected = (dex) => () => {
     setSelectedDex(dex);
@@ -98,6 +105,13 @@ export default function App() {
     }
   };
 
+  const onApproveClicked = () => {
+    const tx = dexContract.approve(walletAddress, fromAmount);
+    tx.then((response) => {
+      console.log(response);
+    }).catch(console.error);
+  };
+
   const onSwapSubmit = (e) => {
     e.preventDefault();
     const tx =
@@ -111,12 +125,6 @@ export default function App() {
     tx.then((response) => {
       setToAmount(response[0].toString());
     }).catch(console.error);
-  };
-
-  const onConnectClicked = () => {
-    provider?.send('eth_requestAccounts', []).then((accounts: string[]) => {
-      setWalletAddress(accounts[0]);
-    });
   };
 
   React.useEffect(() => {
@@ -138,8 +146,10 @@ export default function App() {
       <button onClick={onConnectClicked}>Connect wallet</button>
       <h1>Hello Swap!</h1>
       <p>
-        {!walletAddress && <span>You're not connected, connect wallet</span>}
-        {walletAddress && <span>Connected {walletAddress} :)</span>}
+        {!walletAddress && (
+          <span>🚫 &nbsp;You're not connected, connect wallet</span>
+        )}
+        {walletAddress && <span>✅ &nbsp;Connected {walletAddress} :)</span>}
       </p>
       <ul>
         <li>ETH &lt;=&gt; USDC not working on Viper</li>
@@ -194,6 +204,13 @@ export default function App() {
             ))}
           </select>
         </fieldset>
+        <button
+          disabled={walletAddress === null}
+          type="button"
+          onClick={onApproveClicked}
+        >
+          Approve
+        </button>
         <fieldset>
           <legend>To Token</legend>
           <input
