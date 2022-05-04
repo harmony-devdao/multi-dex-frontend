@@ -28,7 +28,7 @@ enum DEX_CONTRACTS {
 const DEX_LIST = {
   [DEX_CONTRACTS.SUSHI]: {
     name: 'Sushi',
-    address: '0xef0881ec094552b2e128cf945ef17a6752b4ec5d',
+    address: '0x1b02da8cb0d097eb8d57a175b88c7d8b47997506',
   },
   [DEX_CONTRACTS.VIPER]: {
     name: 'Viper',
@@ -39,8 +39,7 @@ const DEX_LIST = {
 
 const DEX_ERC_SWAP_ABI = [
   'function getAmountsOut(uint amountIn, address[] path) view returns (uint[] amounts)',
-  'function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline ) external returns (uint[] memory amounts)',
-  'function swapTokensForExactTokens( uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)',
+  'function swapExactTokensForTokensSupportingFeeOnTransferTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline ) external returns (uint[] memory amounts)',
 ];
 
 enum SELECTED_TOKEN {
@@ -80,7 +79,6 @@ export default function App() {
   };
 
   const onAmountChange = (e) => {
-    console.log('onAmountChange', e.target.value);
     setFromAmount(e.target.value);
     const amount = e.target.value === '' ? 0 : parseFloat(e.target.value);
     const amountIn = ethers.BigNumber.from(amount);
@@ -102,19 +100,17 @@ export default function App() {
 
   const onSwapSubmit = (e) => {
     e.preventDefault();
-    console.log(dexContract);
-    const amountIn = ethers.BigNumber.from(500);
-    const tx = dexContract.getAmountsOut(amountIn, [
-      TOKEN_LIST[0].address,
-      TOKEN_LIST[1].address,
-    ]);
+    const tx =
+      dexContract.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        fromAmount,
+        toAmount,
+        [fromAddress, toAddress],
+        walletAddress,
+        Date.now() + 1000 * 60 * 10
+      );
     tx.then((response) => {
       setToAmount(response[0].toString());
     }).catch(console.error);
-    console.log('onSwapSubmit', e);
-    // console.log(e.target.fromAdress.value);
-    // console.log(e.target.toAdress.value);
-    // console.log(e.target[0].value);
   };
 
   const onConnectClicked = () => {
@@ -129,7 +125,11 @@ export default function App() {
 
   React.useEffect(() => {
     setDexContract(
-      new Contract(DEX_LIST[selectedDex].address, DEX_ERC_SWAP_ABI, provider)
+      new Contract(
+        DEX_LIST[selectedDex].address,
+        DEX_ERC_SWAP_ABI,
+        provider.getSigner()
+      )
     );
   }, [selectedDex]);
 
@@ -178,6 +178,7 @@ export default function App() {
             disabled={!isConnected}
           />
           <select
+            value={fromAddress}
             disabled={!isConnected}
             onChange={onTokenSelected(SELECTED_TOKEN.FROM_ADDRESS)}
           >
