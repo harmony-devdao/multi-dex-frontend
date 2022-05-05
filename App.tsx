@@ -40,7 +40,7 @@ const DEX_LIST = {
 const DEX_ERC_SWAP_ABI = [
   'function getAmountsOut(uint amountIn, address[] path) view returns (uint[] amounts)',
   'function approve(address spender, uint value) external returns (bool)',
-  'function swapExactTokensForTokensSupportingFeeOnTransferTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline ) external returns (uint[] memory amounts)',
+  'function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline ) external returns (uint[] memory amounts)',
 ];
 
 enum SELECTED_TOKEN {
@@ -114,14 +114,13 @@ export default function App() {
 
   const onSwapSubmit = (e) => {
     e.preventDefault();
-    const tx =
-      dexContract.swapExactTokensForTokensSupportingFeeOnTransferTokens(
-        fromAmount,
-        toAmount,
-        [fromAddress, toAddress],
-        walletAddress,
-        Date.now() + 1000 * 60 * 10
-      );
+    const tx = dexContract.swapExactTokensForTokens(
+      fromAmount,
+      toAmount,
+      [fromAddress, toAddress],
+      walletAddress,
+      Date.now() + 1000 * 60 * 10
+    );
     tx.then((response) => {
       setToAmount(response[0].toString());
     }).catch(console.error);
