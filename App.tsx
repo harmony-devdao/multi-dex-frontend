@@ -62,6 +62,8 @@ export default function App() {
 
   const [isConnected, setIsConnected] = React.useState<boolean>(false);
 
+  const [isApproved, setIsApproved] = React.useState<boolean>(false);
+
   let [dexContract, setDexContract] = React.useState(null);
 
   const onConnectClicked = () => {
@@ -109,6 +111,7 @@ export default function App() {
     const tx = dexContract.approve(walletAddress, fromAmount);
     tx.then((response) => {
       console.log(response);
+      setIsApproved(true);
     }).catch(console.error);
   };
 
@@ -122,7 +125,8 @@ export default function App() {
       Date.now() + 1000 * 60 * 10
     );
     tx.then((response) => {
-      setToAmount(response[0].toString());
+      alert('Swap executed successfully');
+      console.log(response);
     }).catch(console.error);
   };
 
@@ -141,109 +145,127 @@ export default function App() {
   }, [selectedDex]);
 
   return (
-    <div>
+    <div className="content">
       <header>
-        <button onClick={onConnectClicked}>Connect wallet</button>
-        <h1>Hello Swap!</h1>
-        <p>
+        <div className="top-bar" role="alert">
           {!walletAddress && (
             <span>🚫 &nbsp;You're not connected, connect wallet</span>
           )}
           {walletAddress && <span>✅ &nbsp;Connected {walletAddress} :)</span>}
-        </p>
+          <button disabled={isConnected} onClick={onConnectClicked}>
+            Connect wallet
+          </button>
+        </div>
+        <h1>Hello Swap!</h1>
+        <p>This is a simplified Multi-DEX running Sushi, Viper, OKX.</p>
       </header>
       <main>
         <ul>
+          <li>These codes are written for development purposes only.</li>
           <li>ETH &lt;=&gt; USDC not working on Viper</li>
         </ul>
-        <div>
-          {Object.keys(DEX_LIST).map((dexKey) => (
-            <button
-              key={dexKey}
-              onClick={onDexSelected(dexKey)}
-              style={{
-                backgroundColor:
-                  isConnected && selectedDex.toString() === dexKey
-                    ? 'yellow'
-                    : null,
-              }}
-              disabled={walletAddress === null}
-            >
-              {DEX_LIST[dexKey].name}
-            </button>
-          ))}
-        </div>
         <form onSubmit={onSwapSubmit}>
+          <div className="button-group">
+            {Object.keys(DEX_LIST).map((dexKey) => (
+              <button
+                key={dexKey}
+                type="button"
+                onClick={onDexSelected(dexKey)}
+                className={`
+                  small outline 
+                  ${
+                    isConnected && selectedDex.toString() === dexKey
+                      ? 'active'
+                      : ''
+                  }
+                `}
+                disabled={walletAddress === null}
+              >
+                {DEX_LIST[dexKey].name}
+              </button>
+            ))}
+          </div>
           <fieldset>
             <legend>From Token</legend>
-            <input
-              name="fromAmount"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
-              placeholder="0.0"
-              spellCheck={false}
-              onChange={onAmountChange}
-              value={fromAmount}
-              disabled={!isConnected}
-            />
-            <select
-              value={fromAddress}
-              disabled={!isConnected}
-              onChange={onTokenSelected(SELECTED_TOKEN.FROM_ADDRESS)}
-            >
-              {TOKEN_LIST.map((token) => (
-                <option
-                  key={token.address}
-                  value={token.address}
-                  selected={token.address === fromAddress}
-                  disabled={token.address === toAddress}
-                >
-                  {token.name}
-                </option>
-              ))}
-            </select>
+            <div className="input-group">
+              <input
+                name="fromAmount"
+                autoComplete="off"
+                autoCorrect="off"
+                type="text"
+                placeholder="0.0"
+                spellCheck={false}
+                onChange={onAmountChange}
+                value={fromAmount}
+                disabled={!isConnected}
+              />
+              <select
+                value={fromAddress}
+                disabled={!isConnected}
+                onChange={onTokenSelected(SELECTED_TOKEN.FROM_ADDRESS)}
+              >
+                {TOKEN_LIST.map((token) => (
+                  <option
+                    key={token.address}
+                    value={token.address}
+                    selected={token.address === fromAddress}
+                    disabled={token.address === toAddress}
+                  >
+                    {token.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </fieldset>
           <button
-            disabled={walletAddress === null}
+            className="outline small"
+            disabled={walletAddress === null || isApproved}
             type="button"
             onClick={onApproveClicked}
           >
             Approve
           </button>
+          {isApproved && <span>✅ </span>}
           <fieldset>
             <legend>To Token</legend>
-            <input
-              name="toAmount"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
-              readOnly={true}
-              placeholder="0.0"
-              spellCheck={false}
-              value={toAmount}
-              disabled={!isConnected}
-            />
-            <select
-              disabled={!isConnected}
-              value={toAddress}
-              onChange={onTokenSelected(SELECTED_TOKEN.TO_ADDRESS)}
-            >
-              {TOKEN_LIST.map((token) => (
-                <option
-                  key={token.address}
-                  value={token.address}
-                  selected={token.address === toAddress}
-                  disabled={token.address === fromAddress}
-                >
-                  {token.name}
-                </option>
-              ))}
-            </select>
+            <div className="input-group">
+              <input
+                name="toAmount"
+                autoComplete="off"
+                autoCorrect="off"
+                type="text"
+                readOnly={true}
+                placeholder="0.0"
+                spellCheck={false}
+                value={toAmount}
+                disabled={!isConnected}
+              />
+              <select
+                disabled={!isConnected}
+                value={toAddress}
+                onChange={onTokenSelected(SELECTED_TOKEN.TO_ADDRESS)}
+              >
+                {TOKEN_LIST.map((token) => (
+                  <option
+                    key={token.address}
+                    value={token.address}
+                    selected={token.address === toAddress}
+                    disabled={token.address === fromAddress}
+                  >
+                    {token.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </fieldset>
           <button disabled={walletAddress === null} type="submit">
             Swap
           </button>
+          <p>
+            <small className="background-text-color">
+              Powered by: {DEX_LIST[selectedDex].name}
+            </small>
+          </p>
         </form>
       </main>
     </div>

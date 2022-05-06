@@ -1,3 +1,130 @@
-h1, p {
+h1,
+p {
   font-family: Lato;
+}
+
+.content {
+  background: #f3fafc;
+  padding-left: 30px;
+  padding-right: 30px;
+  padding-top: 60px;
+  padding-bottom: 80px;
+}
+.top-bar {
+  align-items: center;
+  background: #f7f7f7;
+  border-bottom: 1px solid #0c4434cb;
+  display: flex;
+  font-size: small;
+  justify-content: space-between;
+  padding: 15px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+form {
+  background-color: #207b61;
+  border-radius: 8px;
+  box-sizing: border-box;
+  max-width: 480px;
+  padding: 30px;
+}
+
+input {
+  background: none;
+  border: none;
+  outline: none !important;
+  width: 100%;
+  font-size: x-large;
+}
+
+fieldset {
+  background: #ffffffcb;
+  border: 2px solid #0c4434cb;
+  border-radius: 8px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  padding-top: 15px;
+  position: relative;
+}
+
+legend {
+  font-size: x-small;
+  left: 8px;
+  position: absolute;
+  top: 4px;
+  text-transform: uppercase;
+}
+
+.input-group {
+  display: flex;
+}
+
+select {
+  background: none;
+  border: none !important;
+  flex: auto;
+  font-size: medium;
+  min-height: 40px;
+}
+
+select:focus {
+  border-style: inset;
+  outline-color: #1f6450cb !important;
+}
+
+.button-group {
+  display: grid;
+  grid-gap: 8px;
+  grid-auto-flow: column;
+  box-sizing: border-box;
+  padding: 2px;
+  overflow: hidden;
+}
+
+button {
+  background: #0c4434;
+  color: #f1f1f1;
+  border: 2px solid #1f6450cb;
+  border-radius: 8px;
+  font-size: small;
+  height: 40px;
+  padding-left: 30px;
+  padding-right: 30px;
+}
+
+button:focus {
+  border-style: inset;
+  outline-color: #1f6450cb !important;
+}
+
+button.small {
+  font-size: smaller;
+  height: 30px;
+}
+
+button.outline {
+  background: #f1f1f123 !important;
+}
+
+button.active {
+  background: #f1f1f1 !important;
+  color: #444444;
+}
+
+button:disabled,
+button[disabled] {
+  background-color: #0c44345d !important;
+  border: 2px solid #505050 !important;
+  color: #797979 !important;
+}
+
+button:hover {
+  border: 2px solid #266b58;
+  background-color: #053628;
+}
+
+.background-text-color {
+  color: #b1b1b1;
 }
