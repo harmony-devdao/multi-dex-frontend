@@ -163,6 +163,9 @@ export default function App() {
         <ul>
           <li>These codes are written for development purposes only.</li>
           <li>ETH &lt;=&gt; USDC not working on Viper</li>
+          <li>
+            View on <a href="https://github.com/toniton/hello-swap">Github</a>
+          </li>
         </ul>
         <form onSubmit={onSwapSubmit}>
           <div className="button-group">
