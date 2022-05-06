@@ -7,15 +7,18 @@ import './style.css';
 const TOKEN_LIST = [
   {
     name: '1USDC',
-    address: '0x985458e523db3d53125813ed68c274899e9dfab4',
+    address: '0x985458E523dB3d53125813eD68c274899e9DfAb4',
+    decimals: '6',
   },
   {
     name: 'WONE',
-    address: '0xcf664087a5bb0237a0bad6742852ec6c8d69a27a',
+    address: '0xcF664087a5bB0237a0BAd6742852ec6c8d69A27a',
+    decimals: '18',
   },
   {
     name: '1ETH',
     address: '0x6983d1e6def3690c4d616b13597a09e6193ea013',
+    decimals: '18',
   },
 ];
 
@@ -76,59 +79,96 @@ export default function App() {
     setSelectedDex(dex);
   };
 
-  const getSwapQuote = (amountIn, path) => {
-    const tx = dexContract?.getAmountsOut(amountIn, path);
-    tx.then((quotes) => {
-      return quotes.map((quote) => quote.toString());
-    })
-      .then((response) => {
-        setToAmount(response[1]);
+  const getSwapQuote = React.useCallback(
+    (amountIn, path) => {
+      const tx = dexContract?.getAmountsOut(amountIn, path);
+      tx?.then((quotes) => {
+        return quotes.map((quote) => quote.toString());
       })
-      .catch(console.error);
-  };
+        .then((response) => {
+          const { decimals } = TOKEN_LIST.find(
+            (token) => token.address === path[1]
+          );
+          console.log(path[1], decimals);
+          setToAmount(ethers.utils.formatUnits(response[1], decimals));
+        })
+        .catch(console.error);
+    },
+    [dexContract]
+  );
 
-  const onAmountChange = (e) => {
-    setFromAmount(e.target.value);
-    const amount = e.target.value === '' ? 0 : parseFloat(e.target.value);
-    const amountIn = ethers.BigNumber.from(amount);
-    getSwapQuote(amountIn, [fromAddress, toAddress]);
-  };
+  const onAmountChange = React.useCallback(
+    (e) => {
+      setFromAmount(e.target.value);
+      if (parseInt(e.target.value)) {
+        const { decimals } = TOKEN_LIST.find(
+          (token) => token.address === fromAddress
+        );
+        const amountIn = ethers.utils.parseUnits(e.target.value, decimals);
+        getSwapQuote(amountIn, [fromAddress, toAddress]);
+      }
+    },
+    [fromAddress, toAddress, getSwapQuote]
+  );
 
-  const onTokenSelected = (selection) => (e) => {
-    console.log(selection, e);
-    console.log(e.target.value);
-    const amountIn = ethers.BigNumber.from(fromAmount);
-    if (selection === SELECTED_TOKEN.FROM_ADDRESS) {
-      setFromAddress(e.target.value);
-      getSwapQuote(amountIn, [e.target.value, toAddress]);
-    } else if (selection === SELECTED_TOKEN.TO_ADDRESS) {
-      setToAddress(e.target.value);
-      getSwapQuote(amountIn, [fromAddress, e.target.value]);
-    }
-  };
+  const onTokenSelected = React.useCallback(
+    (selection) => (e) => {
+      const { decimals } = TOKEN_LIST.find(
+        (token) => token.address === e.target.value
+      );
+      const amountIn = ethers.utils.parseUnits(fromAmount, decimals);
+      if (selection === SELECTED_TOKEN.FROM_ADDRESS) {
+        setFromAddress(e.target.value);
+        getSwapQuote(amountIn, [e.target.value, toAddress]);
+      } else if (selection === SELECTED_TOKEN.TO_ADDRESS) {
+        setToAddress(e.target.value);
+        getSwapQuote(amountIn, [fromAddress, e.target.value]);
+      }
+    },
+    [fromAddress, fromAmount, toAddress]
+  );
 
-  const onApproveClicked = () => {
-    const tx = dexContract.approve(walletAddress, fromAmount);
+  const onApproveClicked = React.useCallback(() => {
+    const { decimals } = TOKEN_LIST.find(
+      (token) => token.address === fromAddress
+    );
+    const amountApprove = ethers.utils.parseUnits(fromAmount, decimals);
+    const tx = dexContract.approve(walletAddress, amountApprove);
     tx.then((response) => {
       console.log(response);
       setIsApproved(true);
     }).catch(console.error);
-  };
+  }, [dexContract]);
 
-  const onSwapSubmit = (e) => {
-    e.preventDefault();
-    const tx = dexContract.swapExactTokensForTokens(
-      fromAmount,
-      toAmount,
-      [fromAddress, toAddress],
-      walletAddress,
-      Date.now() + 1000 * 60 * 10
-    );
-    tx.then((response) => {
-      alert('Swap executed successfully');
-      console.log(response);
-    }).catch(console.error);
-  };
+  const onSwapSubmit = React.useCallback(
+    (e) => {
+      e.preventDefault();
+      const { decimals: fromDecimals } = TOKEN_LIST.find(
+        (token) => token.address === fromAddress
+      );
+      const { decimals: toDecimals } = TOKEN_LIST.find(
+        (token) => token.address === toAddress
+      );
+      const amountFrom = ethers.utils.parseUnits(fromAmount, fromDecimals);
+      const amountTo = ethers.utils.parseUnits(toAmount, toDecimals);
+      console.log(amountTo);
+      const amountOutMin = amountTo.sub(amountTo.mul(25).div(100));
+      console.log(amountOutMin);
+
+      const tx = dexContract.swapExactTokensForTokens(
+        amountFrom,
+        amountTo,
+        [fromAddress, toAddress],
+        walletAddress,
+        (Date.now() + 1000) * 60 * 10
+      );
+      tx.then((response) => {
+        alert('Swap executed successfully');
+        console.log(response);
+      }).catch(console.error);
+    },
+    [fromAddress, toAddress, fromAmount, toAmount, dexContract, walletAddress]
+  );
 
   React.useEffect(() => {
     setIsConnected(walletAddress !== null);
@@ -142,7 +182,7 @@ export default function App() {
         provider.getSigner()
       )
     );
-  }, [selectedDex]);
+  }, [isConnected, selectedDex]);
 
   return (
     <div className="content">
@@ -211,7 +251,6 @@ export default function App() {
                   <option
                     key={token.address}
                     value={token.address}
-                    selected={token.address === fromAddress}
                     disabled={token.address === toAddress}
                   >
                     {token.name}
@@ -252,7 +291,6 @@ export default function App() {
                   <option
                     key={token.address}
                     value={token.address}
-                    selected={token.address === toAddress}
                     disabled={token.address === fromAddress}
                   >
                     {token.name}
