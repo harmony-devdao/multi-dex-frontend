@@ -20,16 +20,6 @@ const TOKEN_LIST = [
     address: '0x6983d1e6def3690c4d616b13597a09e6193ea013',
     decimals: '18',
   },
-  {
-    name: 'USDC (Uniswap)',
-    address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-    decimals: '6',
-  },
-  {
-    name: 'cUSDC (Uniswap)',
-    address: '0x39AA39c021dfbaE8faC545936693aC917d5E7563',
-    decimals: '8',
-  },
 ];
 
 enum DEX_CONTRACTS {
@@ -49,10 +39,6 @@ const DEX_LIST = {
     address: '0xf012702a5f0e54015362cbca26a26fc90aa832a3',
   },
   [DEX_CONTRACTS.OKX]: { name: 'OKX', address: '' },
-  [DEX_CONTRACTS.UNISWAP]: {
-    name: 'Uniswap',
-    address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-  },
 };
 
 const DEX_ERC_SWAP_ABI = [
