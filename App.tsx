@@ -20,12 +20,23 @@ const TOKEN_LIST = [
     address: '0x6983d1e6def3690c4d616b13597a09e6193ea013',
     decimals: '18',
   },
+  {
+    name: 'USDC (Uniswap)',
+    address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    decimals: '6',
+  },
+  {
+    name: 'cUSDC (Uniswap)',
+    address: '0x39AA39c021dfbaE8faC545936693aC917d5E7563',
+    decimals: '8',
+  },
 ];
 
 enum DEX_CONTRACTS {
   SUSHI,
   VIPER,
   OKX,
+  UNISWAP,
 }
 
 const DEX_LIST = {
@@ -38,6 +49,10 @@ const DEX_LIST = {
     address: '0xf012702a5f0e54015362cbca26a26fc90aa832a3',
   },
   [DEX_CONTRACTS.OKX]: { name: 'OKX', address: '' },
+  [DEX_CONTRACTS.UNISWAP]: {
+    name: 'Uniswap',
+    address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+  },
 };
 
 const DEX_ERC_SWAP_ABI = [
@@ -89,7 +104,11 @@ export default function App() {
           const { decimals } = TOKEN_LIST.find(
             (token) => token.address === path[1]
           );
-          console.log(path[1], decimals);
+          console.log(
+            path,
+            decimals,
+            ethers.utils.formatUnits(response[1], decimals)
+          );
           setToAmount(ethers.utils.formatUnits(response[1], decimals));
         })
         .catch(console.error);
@@ -116,6 +135,8 @@ export default function App() {
       const { decimals } = TOKEN_LIST.find(
         (token) => token.address === e.target.value
       );
+      console.log(decimals);
+      provider.getCode(e.target.value).then(console.log);
       const amountIn = ethers.utils.parseUnits(fromAmount, decimals);
       if (selection === SELECTED_TOKEN.FROM_ADDRESS) {
         setFromAddress(e.target.value);
@@ -151,13 +172,11 @@ export default function App() {
       );
       const amountFrom = ethers.utils.parseUnits(fromAmount, fromDecimals);
       const amountTo = ethers.utils.parseUnits(toAmount, toDecimals);
-      console.log(amountTo);
-      const amountOutMin = amountTo.sub(amountTo.mul(25).div(100));
-      console.log(amountOutMin);
+      const amountOutMin = amountTo.sub(amountTo.mul(15).div(100));
 
       const tx = dexContract.swapExactTokensForTokens(
         amountFrom,
-        amountTo,
+        amountOutMin,
         [fromAddress, toAddress],
         walletAddress,
         (Date.now() + 1000) * 60 * 10
