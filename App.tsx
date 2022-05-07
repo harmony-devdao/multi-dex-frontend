@@ -53,13 +53,15 @@ enum SELECTED_TOKEN {
 }
 
 export default function App() {
-  let provider: ethers.providers.Web3Provider = ethers.getDefaultProvider();
-  if ((window as any).ethereum) {
-    provider = new ethers.providers.Web3Provider(
-      (window as any).ethereum,
-      'any'
-    );
+  if (!(window as any).ethereum) {
+    alert('You need to install metamask to use HelloSwap!');
+    return null;
   }
+
+  const provider = new ethers.providers.Web3Provider(
+    (window as any).ethereum,
+    'any'
+  );
 
   const [selectedDex, setSelectedDex] = React.useState(DEX_CONTRACTS.SUSHI);
   const [walletAddress, setWalletAddress] = React.useState<String | null>(null);
@@ -186,12 +188,9 @@ export default function App() {
   }, [walletAddress]);
 
   React.useEffect(() => {
-    if (!(window as any).ethereum) {
-      alert('You need to install metamask to use HelloSwap!');
-    }
     console.log(provider);
     setDexContract(() => {
-      new Contract(
+      return new Contract(
         DEX_LIST[selectedDex].address,
         DEX_ERC_SWAP_ABI,
         provider.getSigner()
