@@ -72,8 +72,8 @@ export default function App() {
   const [fromAddress, setFromAddress] = React.useState(TOKEN_LIST[0].address);
   const [toAddress, setToAddress] = React.useState(TOKEN_LIST[1].address);
 
-  const [fromAmount, setFromAmount] = React.useState<string>('0');
-  const [toAmount, setToAmount] = React.useState<string>('0');
+  const [fromAmount, setFromAmount] = React.useState<string>('');
+  const [toAmount, setToAmount] = React.useState<string>('');
 
   const [isConnected, setIsConnected] = React.useState<boolean>(false);
 
@@ -90,22 +90,17 @@ export default function App() {
   const getSwapQuote = React.useCallback(
     (amount, path) => {
       const { decimals } = TOKEN_LIST.find(
-        (token) => token.address === fromAddress
+        (token) => token.address === path[0]
       );
       const amountIn = ethers.utils.parseUnits(amount, decimals);
 
       const tx = dexContract?.getAmountsOut(amountIn, path);
-      console.log('amountIn:::', amountIn.toString(), path);
       tx?.then((quotes) => {
         return quotes.map((quote) => quote.toString());
       })
         .then((response) => {
-          console.log(response);
           const { decimals } = TOKEN_LIST.find(
             (token) => token.address === path[1]
-          );
-          console.log(
-            ethers.utils.formatUnits('11763337', decimals).toString()
           );
           const amount = ethers.utils
             .formatUnits(response[1], decimals)
@@ -117,18 +112,20 @@ export default function App() {
     [dexContract]
   );
 
-  const onDexSelected = (dex) => () => {
-    setSelectedDex(dex);
-    getSwapQuote(fromAmount, [fromAddress, toAddress]);
-  };
+  const onDexSelected = (dex) =>
+    React.useCallback(() => {
+      setSelectedDex(dex);
+      getSwapQuote(fromAmount, [fromAddress, toAddress]);
+    }, [fromAddress, fromAmount, selectedDex, toAddress]);
 
   const onAmountChange = React.useCallback(
     (e) => {
       setFromAmount(e.target.value);
       if (parseInt(e.target.value)) {
         const amountIn = e.target.value;
-        console.log('onAmountChange', e.target.value);
         getSwapQuote(amountIn, [fromAddress, toAddress]);
+      } else {
+        setToAmount('');
       }
     },
     [fromAddress, toAddress, getSwapQuote]
@@ -136,9 +133,6 @@ export default function App() {
 
   const onTokenSelected = React.useCallback(
     (selection) => (e) => {
-      const { decimals } = TOKEN_LIST.find(
-        (token) => token.address === e.target.value
-      );
       if (selection === SELECTED_TOKEN.FROM_ADDRESS) {
         setFromAddress(e.target.value);
         getSwapQuote(fromAmount, [e.target.value, toAddress]);
@@ -155,7 +149,6 @@ export default function App() {
       (token) => token.address === fromAddress
     );
     const amountApprove = ethers.utils.parseUnits(fromAmount, decimals);
-    console.log(fromAmount, decimals, amountApprove.toString());
     const tokenContract = new Contract(
       fromAddress,
       TOKEN_ERC_SWAP_ABI,
@@ -201,7 +194,6 @@ export default function App() {
   }, [walletAddress]);
 
   React.useEffect(() => {
-    console.log(provider);
     setDexContract(() => {
       return new Contract(
         DEX_LIST[selectedDex].address,
@@ -263,7 +255,7 @@ export default function App() {
                 autoComplete="off"
                 autoCorrect="off"
                 type="text"
-                placeholder="0.0"
+                placeholder="0"
                 spellCheck={false}
                 onChange={onAmountChange}
                 value={fromAmount}
@@ -304,7 +296,7 @@ export default function App() {
                 autoCorrect="off"
                 type="text"
                 readOnly={true}
-                placeholder="0.0"
+                placeholder="0"
                 spellCheck={false}
                 value={toAmount}
                 disabled={!isConnected}
