@@ -43,8 +43,11 @@ const DEX_LIST = {
 
 const DEX_ERC_SWAP_ABI = [
   'function getAmountsOut(uint amountIn, address[] path) view returns (uint[] amounts)',
-  'function approve(address spender, uint value) external returns (bool)',
   'function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline ) external returns (uint[] memory amounts)',
+];
+
+const TOKEN_ERC_SWAP_ABI = [
+  'function approve(address spender, uint value) external returns (bool)',
 ];
 
 enum SELECTED_TOKEN {
@@ -84,40 +87,47 @@ export default function App() {
     });
   };
 
-  const onDexSelected = (dex) => () => {
-    setSelectedDex(dex);
-  };
-
   const getSwapQuote = React.useCallback(
-    (amountIn, path) => {
+    (amount, path) => {
+      const { decimals } = TOKEN_LIST.find(
+        (token) => token.address === fromAddress
+      );
+      const amountIn = ethers.utils.parseUnits(amount, decimals);
+
       const tx = dexContract?.getAmountsOut(amountIn, path);
+      console.log('amountIn:::', amountIn.toString(), path);
       tx?.then((quotes) => {
         return quotes.map((quote) => quote.toString());
       })
         .then((response) => {
+          console.log(response);
           const { decimals } = TOKEN_LIST.find(
             (token) => token.address === path[1]
           );
           console.log(
-            path,
-            decimals,
-            ethers.utils.formatUnits(response[1], decimals)
+            ethers.utils.formatUnits('11763337', decimals).toString()
           );
-          setToAmount(ethers.utils.formatUnits(response[1], decimals));
+          const amount = ethers.utils
+            .formatUnits(response[1], decimals)
+            .toString();
+          setToAmount(amount);
         })
         .catch(console.error);
     },
     [dexContract]
   );
 
+  const onDexSelected = (dex) => () => {
+    setSelectedDex(dex);
+    getSwapQuote(fromAmount, [fromAddress, toAddress]);
+  };
+
   const onAmountChange = React.useCallback(
     (e) => {
       setFromAmount(e.target.value);
       if (parseInt(e.target.value)) {
-        const { decimals } = TOKEN_LIST.find(
-          (token) => token.address === fromAddress
-        );
-        const amountIn = ethers.utils.parseUnits(e.target.value, decimals);
+        const amountIn = e.target.value;
+        console.log('onAmountChange', e.target.value);
         getSwapQuote(amountIn, [fromAddress, toAddress]);
       }
     },
@@ -129,15 +139,12 @@ export default function App() {
       const { decimals } = TOKEN_LIST.find(
         (token) => token.address === e.target.value
       );
-      console.log(decimals);
-      provider.getCode(e.target.value).then(console.log);
-      const amountIn = ethers.utils.parseUnits(fromAmount, decimals);
       if (selection === SELECTED_TOKEN.FROM_ADDRESS) {
         setFromAddress(e.target.value);
-        getSwapQuote(amountIn, [e.target.value, toAddress]);
+        getSwapQuote(fromAmount, [e.target.value, toAddress]);
       } else if (selection === SELECTED_TOKEN.TO_ADDRESS) {
         setToAddress(e.target.value);
-        getSwapQuote(amountIn, [fromAddress, e.target.value]);
+        getSwapQuote(fromAmount, [fromAddress, e.target.value]);
       }
     },
     [fromAddress, fromAmount, toAddress]
@@ -148,12 +155,18 @@ export default function App() {
       (token) => token.address === fromAddress
     );
     const amountApprove = ethers.utils.parseUnits(fromAmount, decimals);
-    const tx = dexContract.approve(walletAddress, amountApprove);
+    console.log(fromAmount, decimals, amountApprove.toString());
+    const tokenContract = new Contract(
+      fromAddress,
+      TOKEN_ERC_SWAP_ABI,
+      provider.getSigner()
+    );
+    const tx = tokenContract.approve(walletAddress, amountApprove);
     tx.then((response) => {
       console.log(response);
       setIsApproved(true);
     }).catch(console.error);
-  }, [dexContract]);
+  }, [fromAmount, fromAddress, walletAddress]);
 
   const onSwapSubmit = React.useCallback(
     (e) => {
