@@ -67,7 +67,7 @@ export default function App() {
   );
 
   const [selectedDex, setSelectedDex] = React.useState(DEX_CONTRACTS.SUSHI);
-  const [walletAddress, setWalletAddress] = React.useState<String | null>(null);
+  const [walletAddress, setWalletAddress] = React.useState<string | null>(null);
 
   const [fromAddress, setFromAddress] = React.useState(TOKEN_LIST[0].address);
   const [toAddress, setToAddress] = React.useState(TOKEN_LIST[1].address);
@@ -79,7 +79,7 @@ export default function App() {
 
   const [isApproved, setIsApproved] = React.useState<boolean>(false);
 
-  let [dexContract, setDexContract] = React.useState(null);
+  const [dexContract, setDexContract] = React.useState(null);
 
   const onConnectClicked = () => {
     provider?.send('eth_requestAccounts', []).then((accounts: string[]) => {
@@ -194,7 +194,7 @@ export default function App() {
   }, [walletAddress]);
 
   React.useEffect(() => {
-    setDexContract(() => {
+    setDexContract((): any => {
       return new Contract(
         DEX_LIST[selectedDex].address,
         DEX_ERC_SWAP_ABI,
