@@ -79,17 +79,22 @@ export default function App() {
 
   const [dexContract, setDexContract] = React.useState(null);
 
-  const onConnectClicked = () => {
-    provider?.send('eth_requestAccounts', []).then((accounts: string[]) => {
-      setWalletAddress(accounts[0]);
-    });
-  };
+
+  React.useEffect(() => {
+    const wallet = new (window as any).Wallet({
+      changed: (wallet) => {
+        setWalletAddress(wallet.account);
+      }
+    })
+  }, [])
+
+
 
   const getSwapQuote = React.useCallback(
     (amount, path) => {
 
-      if(!amount)  return
-      
+      if (!amount) return
+
       const { decimals } = TOKEN_LIST.find(
         (token) => token.address === path[0]
       );
@@ -206,34 +211,36 @@ export default function App() {
 
   return (
     <div className="content">
-      <header>
-        <h1>Hello Swap!</h1>
-        <p>This is a simplified Multi-DEX running Sushi, Viper, DFK.</p>
-        <ul>
-          <li>These codes are written for development purposes only.</li>
-          <li>ETH &lt;=&gt; USDC not working on Viper</li>
-          <li>
-            View on <a href="https://github.com/toniton/hello-swap">Github</a>
-          </li>
-        </ul>
-      </header>
-      <main>
+      <header id="top-bar">
+        <div className="wallet">
 
-        <div id="app">
-          <div className="top-bar" role="alert">
-            {!walletAddress && (
-              <div>
-                <span>🚫 &nbsp;You're not connected, connect wallet</span>
-                <button onClick={onConnectClicked}>
-                  Connect wallet
-                </button>
-              </div>
-            )}
-            {walletAddress && <span>✅ &nbsp;Connected {walletAddress} :)</span>}
-
+          <button className="button async-button wallet-button">
+            <div className="spinner"></div>
+          </button>
+          <div className="address">
 
           </div>
+          <div className="network">
 
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <header>
+          <h1>Hello Swap!</h1>
+          <p>This is a simplified Multi-DEX running Sushi, Viper, DFK.</p>
+          <ul>
+            <li>These codes are written for development purposes only.</li>
+            <li>ETH &lt;=&gt; USDC not working on Viper</li>
+            <li>
+              View on <a href="https://github.com/toniton/hello-swap">Github</a>
+            </li>
+          </ul>
+        </header>
+
+
+        <div id="app">
           <form onSubmit={onSwapSubmit}>
             <div className="button-group">
               {Object.keys(DEX_LIST).map((dexKey) => (
