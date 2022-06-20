@@ -1,6 +1,5 @@
 import { Contract, ethers } from 'ethers';
 import * as React from 'react';
-import './style.css';
 
 // These codes are written for development purposes only.
 
@@ -25,8 +24,7 @@ const TOKEN_LIST = [
 enum DEX_CONTRACTS {
   SUSHI,
   VIPER,
-  OKX,
-  UNISWAP,
+  DFK,
 }
 
 const DEX_LIST = {
@@ -38,7 +36,7 @@ const DEX_LIST = {
     name: 'Viper',
     address: '0xf012702a5f0e54015362cbca26a26fc90aa832a3',
   },
-  [DEX_CONTRACTS.OKX]: { name: 'OKX', address: '' },
+  [DEX_CONTRACTS.DFK]: { name: 'DFK', address: '0x24ad62502d1C652Cc7684081169D04896aC20f30' },
 };
 
 const DEX_ERC_SWAP_ABI = [
@@ -81,14 +79,22 @@ export default function App() {
 
   const [dexContract, setDexContract] = React.useState(null);
 
-  const onConnectClicked = () => {
-    provider?.send('eth_requestAccounts', []).then((accounts: string[]) => {
-      setWalletAddress(accounts[0]);
-    });
-  };
+
+  React.useEffect(() => {
+    const wallet = new (window as any).Wallet({
+      changed: (wallet) => {
+        setWalletAddress(wallet.account);
+      }
+    })
+  }, [])
+
+
 
   const getSwapQuote = React.useCallback(
     (amount, path) => {
+
+      if (!amount) return
+
       const { decimals } = TOKEN_LIST.find(
         (token) => token.address === path[0]
       );
@@ -205,56 +211,61 @@ export default function App() {
 
   return (
     <div className="content">
-      <header>
-        <div className="top-bar" role="alert">
-          {!walletAddress && (
-            <span>🚫 &nbsp;You're not connected, connect wallet</span>
-          )}
-          {walletAddress && <span>✅ &nbsp;Connected {walletAddress} :)</span>}
-          <button disabled={isConnected} onClick={onConnectClicked}>
-            Connect wallet
+      <header id="top-bar">
+        <div className="wallet">
+
+          <button className="button async-button wallet-button">
+            <div className="spinner"></div>
           </button>
-        </div>
-        <h1>Hello Swap!</h1>
-        <p>This is a simplified Multi-DEX running Sushi, Viper, OKX.</p>
-      </header>
-      <main>
-        <ul>
-          <li>These codes are written for development purposes only.</li>
-          <li>ETH &lt;=&gt; USDC not working on Viper</li>
-          <li>
-            View on <a href="https://github.com/toniton/hello-swap">Github</a>
-          </li>
-        </ul>
-        <form onSubmit={onSwapSubmit}>
-          <div className="button-group">
-            {Object.keys(DEX_LIST).map((dexKey) => (
-              <button
-                key={dexKey}
-                type="button"
-                onClick={onDexSelected(dexKey)}
-                className={`
-                  small outline 
-                  ${
-                    isConnected && selectedDex.toString() === dexKey
-                      ? 'active'
-                      : ''
-                  }
-                `}
-                disabled={walletAddress === null}
-              >
-                {DEX_LIST[dexKey].name}
-              </button>
-            ))}
+          <div className="address">
+
           </div>
-          <fieldset>
-            <legend>From Token</legend>
-            <div className="input-group">
+          <div className="network">
+
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <header>
+          <h1>Hello Swap!</h1>
+          <p>This is a simplified Multi-DEX running Sushi, Viper, DFK.</p>
+          <ul>
+            <li>These codes are written for development purposes only.</li>
+            <li>ETH &lt;=&gt; USDC not working on Viper</li>
+            <li>
+              View on <a href="https://github.com/toniton/hello-swap">Github</a>
+            </li>
+          </ul>
+        </header>
+
+
+        <div id="app">
+          <form onSubmit={onSwapSubmit}>
+            <div className="button-group">
+              {Object.keys(DEX_LIST).map((dexKey) => (
+                <div
+                  key={dexKey}
+                  onClick={onDexSelected(dexKey)}
+                  className={`
+                  button
+                  ${isConnected && selectedDex.toString() === dexKey
+                      ? 'highlight'
+                      : ''
+                    }
+                `}
+                >
+                  {DEX_LIST[dexKey].name}
+                </div>
+              ))}
+            </div>
+            <label>From</label>
+            <div className="asset-input">
               <input
                 name="fromAmount"
                 autoComplete="off"
                 autoCorrect="off"
-                type="text"
+                type="number"
                 placeholder="0"
                 spellCheck={false}
                 onChange={onAmountChange}
@@ -277,24 +288,23 @@ export default function App() {
                 ))}
               </select>
             </div>
-          </fieldset>
-          <button
-            className="outline small"
-            disabled={walletAddress === null || isApproved}
-            type="button"
-            onClick={onApproveClicked}
-          >
-            Approve
-          </button>
-          {isApproved && <span>✅ </span>}
-          <fieldset>
-            <legend>To Token</legend>
-            <div className="input-group">
+
+            <button
+              className="outline small"
+              disabled={walletAddress === null || isApproved}
+              type="button"
+              onClick={onApproveClicked}
+            >
+              Approve
+            </button>
+            {isApproved && <span>✅ </span>}
+            <label>To</label>
+            <div className="asset-input">
               <input
                 name="toAmount"
                 autoComplete="off"
                 autoCorrect="off"
-                type="text"
+                type="number"
                 readOnly={true}
                 placeholder="0"
                 spellCheck={false}
@@ -317,17 +327,18 @@ export default function App() {
                 ))}
               </select>
             </div>
-          </fieldset>
-          <button disabled={walletAddress === null} type="submit">
-            Swap
-          </button>
-          <p>
-            <small className="background-text-color">
-              Powered by: {DEX_LIST[selectedDex].name}
-            </small>
-          </p>
-        </form>
+            <button disabled={walletAddress === null} type="submit">
+              Swap
+            </button>
+            <p>
+              <small className="background-text-color">
+                Powered by: {DEX_LIST[selectedDex].name}
+              </small>
+            </p>
+          </form>
+
+        </div>
       </main>
-    </div>
+    </div >
   );
 }
