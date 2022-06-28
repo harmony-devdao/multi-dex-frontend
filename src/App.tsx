@@ -3,6 +3,15 @@ import * as React from 'react';
 
 // These codes are written for development purposes only.
 
+
+declare global {
+  interface Window {
+    Tip: any;
+  }
+}
+
+const tippingContract = "0x1c971FE18Ed3c95B3284aFEe3Ff67718C309b921"
+
 const TOKEN_LIST = [
   {
     name: '1USDC',
@@ -80,13 +89,21 @@ export default function App() {
   const [dexContract, setDexContract] = React.useState(null);
 
 
+  let wallet;
+
+
   React.useEffect(() => {
-    const wallet = new (window as any).Wallet({
+    wallet = new (window as any).Wallet({
       changed: (wallet) => {
         setWalletAddress(wallet.account);
       }
     })
+    wallet.init()
   }, [])
+
+  React.useEffect(() => {
+    window.Tip.init(tippingContract, wallet)
+  }, [wallet])
 
 
 
@@ -336,6 +353,23 @@ export default function App() {
               </small>
             </p>
           </form>
+
+
+          <div className="tipping-jar">
+            <div className="tipping-jar-content">
+              <div className="tipping-view">
+                <h2>💙 Show Some Love</h2>
+                <input className="tipping-jar-tip-input" type="number" defaultValue="10" />
+                <ul className="tipping-jar-receivers"></ul>
+                <button className="async-button tipping-jar-tip-button">
+                  <div className="spinner"></div>
+                  Tip
+                </button>
+              </div>
+            </div>
+
+            <button className="floating-button button"></button>
+          </div>
 
         </div>
       </main>
